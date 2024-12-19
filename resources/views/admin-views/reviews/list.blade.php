@@ -1,0 +1,188 @@
+@extends('layouts.back-end.app')
+
+@section('title', translate('Review List'))
+
+@push('css_or_js')
+
+@endpush
+
+@section('content')
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a
+                            href="{{route('admin.dashboard')}}">{{translate('Dashboard')}}</a></li>
+                <li class="breadcrumb-item" aria-current="page">{{translate('reviews')}}</li>
+            </ol>
+        </nav>
+        <!-- End Page Header -->
+        <div class="row gx-2 gx-lg-3">
+            <div class="col-sm-12 col-lg-12 mb-3 mb-lg-2">
+                <!-- Card -->
+                <div class="card">
+                    <!-- Header -->
+                    <div class="card-header">
+                        <div class="flex-between row justify-content-between align-items-center flex-grow-1 mx-1">
+                            <div>
+                                <div class="flex-start">
+                                    <div>
+                                        <h5>{{ translate('Review')}} {{ translate('Table')}}</h5>
+                                    </div>
+                                    <div class="mx-1"><h5 style="color: rgb(252, 59, 10);">({{ $reviews->total() }}
+                                            )</h5></div>
+                                </div>
+                            </div>
+                            <div style="width: 40vw">
+                                <!-- Search -->
+                                <form action="{{ url()->current() }}" method="GET">
+                                    <div class="input-group input-group-merge input-group-flush">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text">
+                                                <i class="tio-search"></i>
+                                            </div>
+                                        </div>
+                                        <input id="datatableSearch_" type="search" name="search" class="form-control"
+                                               placeholder="{{translate('Search by Product or Customer')}}"
+                                               aria-label="Search orders" value="{{ $search }}" required>
+                                        <button type="submit"
+                                                class="btn btn-primary">{{translate('search')}}</button>
+                                    </div>
+                                </form>
+                                <!-- End Search -->
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End Header -->
+
+                    <!-- Table -->
+                    <div class="card-body" style="padding: 0">
+                        <div class="table-responsive datatable-custom">
+                            <table id="columnSearchDatatable"
+                                   style="text-align: {{Session::get('direction') === "rtl" ? 'right' : 'left'}};"
+                                   class="table table-borderless table-thead-bordered table-nowrap table-align-middle card-table"
+                                   data-hs-datatables-options='{
+                                    "order": [],
+                                    "orderCellsTop": true
+                                }'>
+                                <thead class="thead-light">
+                                <tr>
+                                    <th>#{{ translate('sl')}}</th>
+                                    <th style="width: 30%">{{ translate('Product')}}</th>
+                                    <th style="width: 25%">{{ translate('Customer')}}</th>
+                                    <th>{{ translate('Review')}}</th>
+                                    <th>{{ translate('Rating')}}</th>
+                                    <th style="width: 5%;" class="text-center">{{ translate('Action') }}</th>
+                                </tr>
+                                </thead>
+
+                                <tbody>
+                                @foreach($reviews as $key=>$review)
+                                    @if($review->product)
+                                        <tr>
+                                            <td>{{$reviews->firstItem()+$key}}</td>
+                                            <td>
+                                            <span class="d-block font-size-sm text-body">
+                                                <a href="{{route('admin.product.view',[$review['product_id']])}}">
+                                                    {{$review->product['name']}}
+                                                </a>
+                                            </span>
+                                            </td>
+                                            <td>
+                                                @if($review->customer)
+                                                    <a href="{{route('admin.customer.view',[$review->customer_id])}}">
+                                                        {{$review->customer->f_name." ".$review->customer->l_name}}
+                                                    </a>
+                                                @else
+                                                    <label class="badge badge-danger">{{translate('customer_removed')}}</label>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                {{$review->comment?$review->comment:"No Comment Found"}}
+                                            </td>
+                                            <td>
+                                                <label class="badge badge-soft-info">
+                                                    {{$review->rating}} <i class="tio-star"></i>
+                                                </label>
+                                            </td>
+                                            <td>
+                                                <a class="btn btn-danger btn-sm" href="javascript:"
+                                                    onclick="form_alert('review-{{ $review['id'] }}','Want to delete this item ?')">
+                                                    <i class="tio-add-to-trash"></i> {{ translate('Delete') }}
+                                                </a>
+
+                                                <form action="{{ route('admin.reviews.review_delete', [$review['id']]) }}"
+                                                    method="post" id="review-{{ $review['id'] }}">
+                                                    @csrf @method('delete')
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @endif
+                                @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        {{$reviews->links()}}
+                    </div>
+                    @if(count($reviews)==0)
+                        <div class="text-center p-4">
+                            <img class="mb-3" src="{{asset('assets/back-end')}}/svg/illustrations/sorry.svg"
+                                 alt="Image Description" style="width: 7rem;">
+                            <p class="mb-0">{{ translate('No_data_to_show')}}</p>
+                        </div>
+                    @endif
+                    <!-- End Table -->
+                </div>
+                <!-- End Card -->
+            </div>
+        </div>
+    </div>
+
+@endsection
+
+@push('script_2')
+    <script>
+        $(document).on('ready', function () {
+            // INITIALIZATION OF DATATABLES
+            // =======================================================
+            // var datatable = $.HSCore.components.HSDatatables.init($('#columnSearchDatatable'));
+
+            $('#column1_search').on('keyup', function () {
+                datatable
+                    .columns(1)
+                    .search(this.value)
+                    .draw();
+            });
+
+            $('#column2_search').on('keyup', function () {
+                datatable
+                    .columns(2)
+                    .search(this.value)
+                    .draw();
+            });
+
+            $('#column3_search').on('change', function () {
+                datatable
+                    .columns(3)
+                    .search(this.value)
+                    .draw();
+            });
+
+            $('#column4_search').on('keyup', function () {
+                datatable
+                    .columns(4)
+                    .search(this.value)
+                    .draw();
+            });
+
+
+            // INITIALIZATION OF SELECT2
+            // =======================================================
+            $('.js-select2-custom').each(function () {
+                var select2 = $.HSCore.components.HSSelect2.init($(this));
+            });
+        });
+    </script>
+@endpush
